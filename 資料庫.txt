@@ -33,6 +33,7 @@ CREATE TABLE dbo.Commission (
 ALTER TABLE dbo.Commission
 ADD CONSTRAINT FK_Commission_Users_Creator
 FOREIGN KEY (creator_id)
+REFERENCES dbo.Users(uid);
 ===========history=================
 CREATE TABLE dbo.CommissionHistory (
     history_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -90,7 +91,7 @@ CREATE TABLE dbo.CommissionShipping (
    logistics_name NVARCHAR(50) NULL,      -- 郵局 / 7-11 / 黑貓 /蝦皮 /面交 等等寄送方式 紀錄(避免爭議 買家若沒收到 也有地方可以驗證有寄貨出)
     tracking_number NVARCHAR(100) NULL,    -- 單號 可以是空
     remark NVARCHAR(255) NULL;              -- 補充說明 備註（例如：面交 / 放管理室）
-);
+
 
     CONSTRAINT FK_CommissionShipping_Commission
         FOREIGN KEY (commission_id)
