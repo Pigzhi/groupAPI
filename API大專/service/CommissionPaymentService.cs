@@ -44,7 +44,7 @@ namespace API大專.service
                 throw new Exception("找不到接委託人");
 
             // 撥款
-            seller.Balance += commission.EscrowAmount;
+            seller.Balance += (commission.EscrowAmount-commission.Fee); 
             commission.EscrowAmount = 0;
         }
 
@@ -69,8 +69,11 @@ namespace API大專.service
                 throw new Exception("找不到委託者");
 
             // 退款
+            if (commission.Status == "COMPLETED")
+                throw new Exception("訂單已完成，禁止重複撥款");
             buyer.Balance += commission.EscrowAmount;
             commission.EscrowAmount = 0;
+            
         }
     }
 

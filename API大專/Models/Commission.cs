@@ -10,6 +10,8 @@ public partial class Commission
     [Key]
     [Column("commission_id")]
     public int CommissionId { get; set; }
+    [Column("service_code")]
+    public string ServiceCode { get; set; } = null!;
 
     [Column("creator_id")]
     public string? CreatorId { get; set; }
@@ -20,9 +22,9 @@ public partial class Commission
 
     public string? Description { get; set; }
 
-    public decimal? Price { get; set; }
+    public decimal Price { get; set; }
 
-    public int? Quantity { get; set; }
+    public int Quantity { get; set; }
 
     public string? Category { get; set; }
 
@@ -37,7 +39,7 @@ public partial class Commission
     [Column("escrowAmount")]
     public decimal EscrowAmount { get; set; }
 
-    public decimal? Fee { get; set; }
+    public decimal Fee { get; set; }
 
     public int? FailCount { get; set; }
 

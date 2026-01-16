@@ -25,7 +25,7 @@ public partial class ProxyContext : DbContext
 
     public virtual DbSet<CommissionShipping> CommissionShippings { get; set; }
 
-
+    public virtual DbSet<CommissionSequence> CommissionSequences { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -225,7 +225,22 @@ public partial class ProxyContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("tracking_number");
         });
+        modelBuilder.Entity<CommissionSequence>(entity =>
+        {
+            entity.HasKey(e => e.Ym);
 
+            entity.ToTable("commission_sequence");
+
+            entity.Property(e => e.Ym)
+                .HasMaxLength(6)
+                .IsUnicode(false)
+                .IsFixedLength()
+                .HasColumnName("ym");
+            entity.Property(e => e.Seq).HasColumnName("seq");
+            entity.Property(e => e.UpdatedAt)
+                .HasDefaultValueSql("(sysdatetime())")
+                .HasColumnName("updated_at");
+        });
         OnModelCreatingPartial(modelBuilder);
     }
 

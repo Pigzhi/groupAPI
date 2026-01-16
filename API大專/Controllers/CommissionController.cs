@@ -1,5 +1,6 @@
 ﻿using API大專.DTO;
 using API大專.Models;
+using API大專.service;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -14,21 +15,25 @@ namespace API大專.Controllers
     public class CommissionController : ControllerBase
     {
         private readonly ProxyContext _proxyContext;
-        public CommissionController(ProxyContext proxyContext)
+        private readonly CommissionService _CommissionService;
+        private readonly CreateCommissionCode _CreateCode;
+        public CommissionController(ProxyContext proxyContext, CommissionService commissionService, CreateCommissionCode CreateCode)
         {
             _proxyContext = proxyContext;
+            _CommissionService = commissionService;
+            _CreateCode = CreateCode;
         }
 
-        //委託 展示
+        //委託 待接單所有 展示
         [HttpGet]
         public async Task<IActionResult> GetCommissionsList() 
         { 
             var commissions = await _proxyContext.Commissions
                                                 .Where(u=>u.Status == "待接單")
-                                                .OrderByDescending(u=>u.UpdatedAt) 
+                                                .OrderByDescending(u=>u.UpdatedAt) //由大到小時間抓
                                                 .Select(u=> new 
                                                 { 
-                                                u.CommissionId,
+                                                u.ServiceCode,
                                                 u.Title,
                                                 u.Price,
                                                 u.Quantity,
@@ -46,15 +51,15 @@ namespace API大專.Controllers
             });
         }
 
-        //撈單筆詳細資料
-        [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetDetail(int id) 
+        //點擊委託之後 顯示的單筆詳細資料
+        [HttpGet("{ServiceCode}")]
+        public async Task<IActionResult> GetDetail(string ServiceCode) 
         {
             var Commission = await _proxyContext.Commissions
-                                               .Where(c => c.CommissionId == id && c.Status == "待接單")
+                                               .Where(c => c.ServiceCode == ServiceCode && c.Status == "待接單")
                                                .Select(c => new
                                                {    //比普通清單多
-                                                   c.CommissionId,
+                                                   c.ServiceCode,
                                                    c.Title,
                                                    c.Description, //描述
                                                    c.Price, 
@@ -84,123 +89,10 @@ namespace API大專.Controllers
         
         }
 
-  
-
-        [HttpPost("{id:int}/accept")]
-        public async Task<IActionResult> acceptCommission(int id)
-        {
-            var userid = "102";
-            //var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
-
-            using var transaction = await _proxyContext.Database.BeginTransactionAsync();
-            try
-            {
-                var oldDiff = await _proxyContext.Commissions
-                             .Where(c => c.CommissionId == id)
-                             .Select(c => new
-                             {
-                                 oldstatus =  c.Status
-                             }).FirstOrDefaultAsync();
-                var affected = await _proxyContext.Database.ExecuteSqlRawAsync(@"
-                          UPDATE Commission
-                          SET Status = '已接單',
-                          UpdatedAt = GETDATE()
-                          WHERE 
-                          commission_id = @id
-                          AND status = '待接單'
-                          AND creator_id <> @userId
-                            ",
-                    new SqlParameter("@id", id),
-                    new SqlParameter("@userId", userid)
-                    );
-
-                if (affected == 0)
-                {
-                    await transaction.RollbackAsync();
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = "訂單已被接取或無法接單"
-                    });
-                }
-
-                var commission = await _proxyContext.Commissions
-                                                  .Where(c => c.CommissionId == id)
-                                                  .Select(c => new
-                                                  {
-                                                      c.CommissionId,
-                                                      c.CreatorId,
-                                                      c.EscrowAmount,
-                                                      c.Status
-                                                  }).FirstOrDefaultAsync();
-
-                var order = new CommissionOrder
-                {
-                    CommissionId = commission.CommissionId,
-                    SellerId = userid,
-                    BuyerId = commission.CreatorId,
-                    Status = "PENDING", //未完成
-                    Amount = commission.EscrowAmount,
-                    CreatedAt = DateTime.Now
-                };
-                 _proxyContext.CommissionOrders.Add(order);
-
-                var jsonOptions = new JsonSerializerOptions
-                {
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-                };
-                var newDiff = await _proxyContext.Commissions
-                              .Where(c => c.CommissionId == id)
-                              .Select(c => new
-                              {
-                                  newstatus = c.Status
-                              }).FirstOrDefaultAsync();
-                var history = new CommissionHistory
-                    {
-                        CommissionId = commission.CommissionId,
-                        Action = "ACCEPT",
-                        ChangedBy = userid,
-                        ChangedAt = DateTime.Now,
-                        OldData = JsonSerializer.Serialize(oldDiff, jsonOptions),
-                        NewData = JsonSerializer.Serialize(newDiff, jsonOptions)
-                    };
-
-                
-                    _proxyContext.CommissionHistories.Add(history);
-                
-
-                await _proxyContext.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return Ok(new
-                {
-                    success = true,
-                    message = "訂單接受"
-                });
-
-            }
-            //catch
-            //{
-            //    await transaction.RollbackAsync();
-            //    return BadRequest(new
-            //    {
-            //        success = false,
-            //        message = "接取訂單失敗，或是訂單已被接取"
-            //    });
-            //}
-            catch (Exception ex) //如果報錯可以用
-            {
-                await transaction.RollbackAsync();
-                return BadRequest(new
-                {
-                    success = false,
-                    message = ex.Message,
-                    inner = ex.InnerException?.Message
-                });
-            }
+        
 
 
-        }
+        
 
     }
 }

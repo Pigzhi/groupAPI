@@ -14,7 +14,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<CommissionService>();
-
+builder.Services.AddScoped<CreateCommissionCode>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

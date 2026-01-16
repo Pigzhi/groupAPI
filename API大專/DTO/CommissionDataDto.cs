@@ -6,6 +6,7 @@ namespace API大專.DTO
     {
         public string? Title { get; set; }
 
+        public string ServiceCode { get; set; } = null;
         public string? Description { get; set; }
         public Decimal TotalPrice { get; set; }
         public int? Quantity { get; set; }

@@ -42,12 +42,12 @@ namespace API大專.service
 
 
 
-                //判斷 修改內容 給歷史diff使用
+               
 
                 var oldDiff = new Dictionary<string, object>();
                 var newDiff = new Dictionary<string, object>();
 
-               
+                
                 if (Commission.Title != dto.Title)
                 {
                     oldDiff["Title"] = Commission.Title;
@@ -60,7 +60,7 @@ namespace API大專.service
                 }
                 if (Commission.Price != dto.Price)
                 {
-                    oldDiff["Price"] = Commission.Price;  
+                    oldDiff["Price"] = Commission.Price; 
                     newDiff["Price"] = dto.Price;
                 }
                 if (Commission.Quantity != dto.Quantity)
@@ -97,7 +97,7 @@ namespace API大專.service
                 {
                     return (false, "錢包餘額不足，金額變更失敗");
                 }
-                user.Balance -= diff;   //diff是多的就是 錢包-diff ， 改便宜 diff變-的 就是 錢包-(-diff);
+                user.Balance -= diff;   
 
                 Commission.Title = dto.Title;
                 Commission.Description = dto.Description;
@@ -108,7 +108,7 @@ namespace API大專.service
                 if (Commission.Deadline != dto.Deadline)
                 {
                     Commission.Deadline = dto.Deadline.AddDays(7);
-                } //在新的時間基礎上再往後加 7 天
+                } 
                 Commission.Fee = newfee;
                 Commission.EscrowAmount = newtotal;
 
@@ -118,19 +118,20 @@ namespace API大專.service
                 if (dto.Image != null && dto.Image.Length > 0)
                 {
                     var uploadPath = Path.Combine("wwwroot", "uploads");  
-                    Directory.CreateDirectory(uploadPath);                              
+                    Directory.CreateDirectory(uploadPath);                                 
 
                     if (!string.IsNullOrEmpty(Commission.ImageUrl))
                     {
                         var oldImagePath = Path.Combine("wwwroot", Commission.ImageUrl.TrimStart('/')); 
-                        if (File.Exists(oldImagePath))
+                        if (File.Exists(oldImagePath)) 
                         {
                             File.Delete(oldImagePath);
                         }
                     }
-                    
+                  
                     var fileName = $"{Guid.NewGuid()}{Path.GetExtension(dto.Image.FileName)}"; 
                     var filePath = Path.Combine(uploadPath, fileName);
+                                                                    
                     using var stream = new FileStream(filePath, FileMode.Create); 
                     await dto.Image.CopyToAsync(stream); 
 
@@ -138,7 +139,7 @@ namespace API大專.service
                 }
 
 
-             
+              
                 var jsonOptions = new JsonSerializerOptions
                 {
                     Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
